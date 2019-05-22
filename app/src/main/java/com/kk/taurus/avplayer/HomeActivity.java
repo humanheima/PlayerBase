@@ -11,17 +11,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import com.kk.taurus.avplayer.ui.InputUrlPlayActivity;
-import com.kk.taurus.avplayer.ui.ViewPagerPlayActivity;
-import com.kk.taurus.avplayer.ui.listplay.MultiListActivity;
-import com.kk.taurus.avplayer.ui.ShareAnimationActivityA;
-import com.kk.taurus.playerbase.config.PlayerConfig;
-import com.kk.taurus.playerbase.entity.DecoderPlan;
-
-import com.kk.taurus.avplayer.ui.listplay.ListPlayActivity;
 import com.kk.taurus.avplayer.ui.BaseVideoViewActivity;
+import com.kk.taurus.avplayer.ui.InputUrlPlayActivity;
+import com.kk.taurus.avplayer.ui.ShareAnimationActivityA;
+import com.kk.taurus.avplayer.ui.TestToDetailActivity;
+import com.kk.taurus.avplayer.ui.ViewPagerPlayActivity;
+import com.kk.taurus.avplayer.ui.listplay.ListPlayActivity;
+import com.kk.taurus.avplayer.ui.listplay.MultiListActivity;
 import com.kk.taurus.avplayer.ui.window.FloatWindowActivity;
 import com.kk.taurus.avplayer.ui.window.WindowVideoViewActivity;
+import com.kk.taurus.playerbase.config.PlayerConfig;
+import com.kk.taurus.playerbase.entity.DecoderPlan;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -48,7 +48,7 @@ public class HomeActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.switchIjkPlayer:
                 PlayerConfig.setDefaultPlanId(App.PLAN_ID_IJK);
                 updateDecoderInfo();
@@ -79,35 +79,39 @@ public class HomeActivity extends AppCompatActivity {
         mInfo.setText("当前解码方案为:" + defaultPlan.getDesc());
     }
 
-    public void useBaseVideoView(View view){
+    public void useBaseVideoView(View view) {
         intentTo(BaseVideoViewActivity.class);
     }
 
-    public void useWindowVideoView(View view){
+    public void useWindowVideoView(View view) {
         intentTo(WindowVideoViewActivity.class);
     }
 
-    public void useFloatWindow(View view){
+    public void useFloatWindow(View view) {
         intentTo(FloatWindowActivity.class);
     }
 
-    public void viewPagerPlay(View view){
+    public void viewPagerPlay(View view) {
         intentTo(ViewPagerPlayActivity.class);
     }
 
-    public void singleListPlay(View view){
+    public void singleListPlay(View view) {
         intentTo(ListPlayActivity.class);
     }
 
-    public void multiListPlay(View view){
+    public void multiListPlay(View view) {
         intentTo(MultiListActivity.class);
     }
 
-    public void shareAnimationVideos(View view){
+    public void shareAnimationVideos(View view) {
         intentTo(ShareAnimationActivityA.class);
     }
 
-    private void intentTo(Class<? extends Activity> cls){
+    public void testToDetail(View view) {
+        TestToDetailActivity.launch(this);
+    }
+
+    private void intentTo(Class<? extends Activity> cls) {
         Intent intent = new Intent(getApplicationContext(), cls);
         startActivity(intent);
     }

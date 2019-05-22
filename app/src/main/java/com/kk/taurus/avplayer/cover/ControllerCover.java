@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 
 import com.kk.taurus.avplayer.play.DataInter;
 import com.kk.taurus.avplayer.R;
+import com.kk.taurus.avplayer.utils.GroupValueMap;
 import com.kk.taurus.playerbase.entity.DataSource;
 import com.kk.taurus.playerbase.event.BundlePool;
 import com.kk.taurus.playerbase.event.EventKey;
@@ -24,6 +26,7 @@ import com.kk.taurus.playerbase.event.OnPlayerEventListener;
 import com.kk.taurus.playerbase.log.PLog;
 import com.kk.taurus.playerbase.player.IPlayer;
 import com.kk.taurus.playerbase.player.OnTimerUpdateListener;
+import com.kk.taurus.playerbase.receiver.GroupValue;
 import com.kk.taurus.playerbase.receiver.IReceiverGroup;
 import com.kk.taurus.playerbase.touch.OnTouchGestureListener;
 import com.kk.taurus.playerbase.receiver.BaseCover;
@@ -38,7 +41,9 @@ import butterknife.Unbinder;
  * Created by Taurus on 2018/4/15.
  */
 
-public class ControllerCover extends BaseCover implements OnTimerUpdateListener, OnTouchGestureListener{
+public class ControllerCover extends BaseCover implements OnTimerUpdateListener, OnTouchGestureListener {
+
+    private static final String TAG = "ControllerCover";
 
     private final int MSG_CODE_DELAY_HIDDEN_CONTROLLER = 101;
 
@@ -69,11 +74,11 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
 
     private boolean mTimerUpdateProgressEnable = true;
 
-    private Handler mHandler = new Handler(Looper.getMainLooper()){
+    private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            switch (msg.what){
+            switch (msg.what) {
                 case MSG_CODE_DELAY_HIDDEN_CONTROLLER:
                     PLog.d(getTag().toString(), "msg_delay_hidden...");
                     setControllerState(false);
@@ -104,17 +109,19 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
 
         getGroupValue().registerOnGroupValueUpdateListener(mOnGroupValueUpdateListener);
 
+
     }
 
     @Override
     protected void onCoverAttachedToWindow() {
         super.onCoverAttachedToWindow();
+        Log.d(TAG, "onCoverAttachedToWindow: ");
         DataSource dataSource = getGroupValue().get(DataInter.Key.KEY_DATA_SOURCE);
         setTitle(dataSource);
 
         boolean topEnable = getGroupValue().getBoolean(DataInter.Key.KEY_CONTROLLER_TOP_ENABLE, false);
         mControllerTopEnable = topEnable;
-        if(!topEnable){
+        if (!topEnable) {
             setTopContainerState(false);
         }
 
@@ -149,16 +156,18 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
             R.id.cover_player_controller_image_view_back_icon,
             R.id.cover_player_controller_image_view_play_state,
             R.id.cover_player_controller_image_view_switch_screen})
-    public void onViewClick(View view){
-        switch (view.getId()){
+    public void onViewClick(View view) {
+        switch (view.getId()) {
             case R.id.cover_player_controller_image_view_back_icon:
                 notifyReceiverEvent(DataInter.Event.EVENT_CODE_REQUEST_BACK, null);
                 break;
             case R.id.cover_player_controller_image_view_play_state:
                 boolean selected = mStateIcon.isSelected();
-                if(selected){
+                if (selected) {
+                    getGroupValue().putBoolean(GroupValueMap.USER_START_PLAY, true);
                     requestResume(null);
-                }else{
+                } else {
+                    getGroupValue().putBoolean(GroupValueMap.USER_START_PLAY, false);
                     requestPause(null);
                 }
                 mStateIcon.setSelected(!selected);
@@ -166,63 +175,67 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
             case R.id.cover_player_controller_image_view_switch_screen:
                 notifyReceiverEvent(DataInter.Event.EVENT_CODE_REQUEST_TOGGLE_SCREEN, null);
                 break;
+            default:
+                break;
         }
     }
 
     private IReceiverGroup.OnGroupValueUpdateListener mOnGroupValueUpdateListener =
             new IReceiverGroup.OnGroupValueUpdateListener() {
-        @Override
-        public String[] filterKeys() {
-            return new String[]{
-                    DataInter.Key.KEY_COMPLETE_SHOW,
-                    DataInter.Key.KEY_TIMER_UPDATE_ENABLE,
-                    DataInter.Key.KEY_DATA_SOURCE,
-                    DataInter.Key.KEY_IS_LANDSCAPE,
-                    DataInter.Key.KEY_CONTROLLER_TOP_ENABLE};
-        }
+                @Override
+                public String[] filterKeys() {
+                    return new String[]{
+                            DataInter.Key.KEY_COMPLETE_SHOW,
+                            DataInter.Key.KEY_TIMER_UPDATE_ENABLE,
+                            DataInter.Key.KEY_DATA_SOURCE,
+                            DataInter.Key.KEY_IS_LANDSCAPE,
+                            DataInter.Key.KEY_CONTROLLER_TOP_ENABLE};
+                }
 
-        @Override
-        public void onValueUpdate(String key, Object value) {
-            if(key.equals(DataInter.Key.KEY_COMPLETE_SHOW)){
-                boolean show = (boolean) value;
-                if(show){
-                    setControllerState(false);
+                @Override
+                public void onValueUpdate(String key, Object value) {
+                    if (key.equals(DataInter.Key.KEY_COMPLETE_SHOW)) {
+                        boolean show = (boolean) value;
+                        if (show) {
+                            setControllerState(false);
+                        }
+                        setGestureEnable(!show);
+                    } else if (key.equals(DataInter.Key.KEY_CONTROLLER_TOP_ENABLE)) {
+                        mControllerTopEnable = (boolean) value;
+                        if (!mControllerTopEnable) {
+                            setTopContainerState(false);
+                        }
+                    } else if (key.equals(DataInter.Key.KEY_IS_LANDSCAPE)) {
+                        setSwitchScreenIcon((Boolean) value);
+                    } else if (key.equals(DataInter.Key.KEY_TIMER_UPDATE_ENABLE)) {
+                        mTimerUpdateProgressEnable = (boolean) value;
+                    } else if (key.equals(DataInter.Key.KEY_DATA_SOURCE)) {
+                        DataSource dataSource = (DataSource) value;
+                        setTitle(dataSource);
+                    }
                 }
-                setGestureEnable(!show);
-            }else if(key.equals(DataInter.Key.KEY_CONTROLLER_TOP_ENABLE)){
-                mControllerTopEnable = (boolean) value;
-                if(!mControllerTopEnable){
-                    setTopContainerState(false);
-                }
-            }else if(key.equals(DataInter.Key.KEY_IS_LANDSCAPE)){
-                setSwitchScreenIcon((Boolean) value);
-            }else if(key.equals(DataInter.Key.KEY_TIMER_UPDATE_ENABLE)){
-                mTimerUpdateProgressEnable = (boolean) value;
-            }else if(key.equals(DataInter.Key.KEY_DATA_SOURCE)){
-                DataSource dataSource = (DataSource) value;
-                setTitle(dataSource);
-            }
-        }
-    };
+            };
 
     private SeekBar.OnSeekBarChangeListener onSeekBarChangeListener =
             new SeekBar.OnSeekBarChangeListener() {
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if(fromUser)
-                updateUI(progress, seekBar.getMax());
-        }
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser)
+                        updateUI(progress, seekBar.getMax());
+                }
 
-        }
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-            sendSeekEvent(seekBar.getProgress());
-        }
-    };
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
 
-    private void sendSeekEvent(int progress){
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    sendSeekEvent(seekBar.getProgress());
+                }
+            };
+
+    private void sendSeekEvent(int progress) {
         mTimerUpdateProgressEnable = false;
         mSeekProgress = progress;
         mHandler.removeCallbacks(mSeekEventRunnable);
@@ -232,7 +245,7 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
     private Runnable mSeekEventRunnable = new Runnable() {
         @Override
         public void run() {
-            if(mSeekProgress < 0)
+            if (mSeekProgress < 0)
                 return;
             Bundle bundle = BundlePool.obtain();
             bundle.putInt(EventKey.INT_DATA, mSeekProgress);
@@ -240,85 +253,86 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
         }
     };
 
-    private void setTitle(DataSource dataSource){
-        if(dataSource!=null){
+    private void setTitle(DataSource dataSource) {
+        if (dataSource != null) {
             String title = dataSource.getTitle();
-            if(!TextUtils.isEmpty(title)){
+            if (!TextUtils.isEmpty(title)) {
                 setTitle(title);
                 return;
             }
             String data = dataSource.getData();
-            if(!TextUtils.isEmpty(data)){
+            if (!TextUtils.isEmpty(data)) {
                 setTitle(data);
             }
         }
     }
 
-    private void setTitle(String text){
+    private void setTitle(String text) {
         mTopTitle.setText(text);
     }
 
-    private void setSwitchScreenIcon(boolean isFullScreen){
-        mSwitchScreen.setImageResource(isFullScreen?R.mipmap.icon_exit_full_screen:R.mipmap.icon_full_screen);
+    private void setSwitchScreenIcon(boolean isFullScreen) {
+        mSwitchScreen.setImageResource(isFullScreen ? R.mipmap.icon_exit_full_screen : R.mipmap.icon_full_screen);
     }
 
     private void setScreenSwitchEnable(boolean screenSwitchEnable) {
-        mSwitchScreen.setVisibility(screenSwitchEnable?View.VISIBLE:View.GONE);
+        mSwitchScreen.setVisibility(screenSwitchEnable ? View.VISIBLE : View.GONE);
     }
 
-    private void setBottomSeekBarState(boolean state){
-        mBottomSeekBar.setVisibility(state?View.VISIBLE:View.GONE);
+    private void setBottomSeekBarState(boolean state) {
+        mBottomSeekBar.setVisibility(state ? View.VISIBLE : View.GONE);
     }
 
     private void setGestureEnable(boolean gestureEnable) {
         this.mGestureEnable = gestureEnable;
     }
 
-    private void cancelTopAnimation(){
-        if(mTopAnimator!=null){
+    private void cancelTopAnimation() {
+        if (mTopAnimator != null) {
             mTopAnimator.cancel();
             mTopAnimator.removeAllListeners();
             mTopAnimator.removeAllUpdateListeners();
         }
     }
 
-    private void setTopContainerState(final boolean state){
-        if(mControllerTopEnable){
+    private void setTopContainerState(final boolean state) {
+        if (mControllerTopEnable) {
             mTopContainer.clearAnimation();
             cancelTopAnimation();
             mTopAnimator = ObjectAnimator.ofFloat(mTopContainer,
-                            "alpha", state ? 0 : 1, state ? 1 : 0).setDuration(300);
+                    "alpha", state ? 0 : 1, state ? 1 : 0).setDuration(300);
             mTopAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationStart(Animator animation) {
                     super.onAnimationStart(animation);
-                    if(state){
+                    if (state) {
                         mTopContainer.setVisibility(View.VISIBLE);
                     }
                 }
+
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
-                    if(!state){
+                    if (!state) {
                         mTopContainer.setVisibility(View.GONE);
                     }
                 }
             });
             mTopAnimator.start();
-        }else{
+        } else {
             mTopContainer.setVisibility(View.GONE);
         }
     }
 
-    private void cancelBottomAnimation(){
-        if(mBottomAnimator!=null){
+    private void cancelBottomAnimation() {
+        if (mBottomAnimator != null) {
             mBottomAnimator.cancel();
             mBottomAnimator.removeAllListeners();
             mBottomAnimator.removeAllUpdateListeners();
         }
     }
 
-    private void setBottomContainerState(final boolean state){
+    private void setBottomContainerState(final boolean state) {
         mBottomContainer.clearAnimation();
         cancelBottomAnimation();
         mBottomAnimator = ObjectAnimator.ofFloat(mBottomContainer,
@@ -327,14 +341,15 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
             @Override
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
-                if(state){
+                if (state) {
                     mBottomContainer.setVisibility(View.VISIBLE);
                 }
             }
+
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                if(!state){
+                if (!state) {
                     mBottomContainer.setVisibility(View.GONE);
                 }
             }
@@ -343,68 +358,68 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
         setBottomSeekBarState(!state);
     }
 
-    private void setControllerState(boolean state){
-        if(state){
+    private void setControllerState(boolean state) {
+        if (state) {
             sendDelayHiddenMessage();
-        }else{
+        } else {
             removeDelayHiddenMessage();
         }
         setTopContainerState(state);
         setBottomContainerState(state);
     }
 
-    private boolean isControllerShow(){
-        return mBottomContainer.getVisibility()==View.VISIBLE;
+    private boolean isControllerShow() {
+        return mBottomContainer.getVisibility() == View.VISIBLE;
     }
 
-    private void toggleController(){
-        if(isControllerShow()){
+    private void toggleController() {
+        if (isControllerShow()) {
             setControllerState(false);
-        }else{
+        } else {
             setControllerState(true);
         }
     }
 
-    private void sendDelayHiddenMessage(){
+    private void sendDelayHiddenMessage() {
         removeDelayHiddenMessage();
         mHandler.sendEmptyMessageDelayed(MSG_CODE_DELAY_HIDDEN_CONTROLLER, 5000);
     }
 
-    private void removeDelayHiddenMessage(){
+    private void removeDelayHiddenMessage() {
         mHandler.removeMessages(MSG_CODE_DELAY_HIDDEN_CONTROLLER);
     }
 
-    private void setCurrTime(int curr){
+    private void setCurrTime(int curr) {
         mCurrTime.setText(TimeUtil.getTime(mTimeFormat, curr));
     }
 
-    private void setTotalTime(int duration){
+    private void setTotalTime(int duration) {
         mTotalTime.setText(TimeUtil.getTime(mTimeFormat, duration));
     }
 
-    private void setSeekProgress(int curr, int duration){
+    private void setSeekProgress(int curr, int duration) {
         mSeekBar.setMax(duration);
         mSeekBar.setProgress(curr);
-        float secondProgress = mBufferPercentage * 1.0f/100 * duration;
+        float secondProgress = mBufferPercentage * 1.0f / 100 * duration;
         setSecondProgress((int) secondProgress);
     }
 
-    private void setSecondProgress(int secondProgress){
+    private void setSecondProgress(int secondProgress) {
         mSeekBar.setSecondaryProgress(secondProgress);
     }
 
-    private void setBottomSeekProgress(int curr, int duration){
+    private void setBottomSeekProgress(int curr, int duration) {
         mBottomSeekBar.setMax(duration);
         mBottomSeekBar.setProgress(curr);
-        float secondProgress = mBufferPercentage * 1.0f/100 * duration;
+        float secondProgress = mBufferPercentage * 1.0f / 100 * duration;
         mBottomSeekBar.setSecondaryProgress((int) secondProgress);
     }
 
     @Override
     public void onTimerUpdate(int curr, int duration, int bufferPercentage) {
-        if(!mTimerUpdateProgressEnable)
+        if (!mTimerUpdateProgressEnable)
             return;
-        if(mTimeFormat==null || duration != mSeekBar.getMax()){
+        if (mTimeFormat == null || duration != mSeekBar.getMax()) {
             mTimeFormat = TimeUtil.getFormat(duration);
         }
         mBufferPercentage = bufferPercentage;
@@ -420,7 +435,7 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
 
     @Override
     public void onPlayerEvent(int eventCode, Bundle bundle) {
-        switch (eventCode){
+        switch (eventCode) {
             case OnPlayerEventListener.PLAYER_EVENT_ON_DATA_SOURCE_SET:
                 mBufferPercentage = 0;
                 mTimeFormat = null;
@@ -432,9 +447,9 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
                 break;
             case OnPlayerEventListener.PLAYER_EVENT_ON_STATUS_CHANGE:
                 int status = bundle.getInt(EventKey.INT_DATA);
-                if(status== IPlayer.STATE_PAUSED){
+                if (status == IPlayer.STATE_PAUSED) {
                     mStateIcon.setSelected(true);
-                }else if(status==IPlayer.STATE_STARTED){
+                } else if (status == IPlayer.STATE_STARTED) {
                     mStateIcon.setSelected(false);
                 }
                 break;
@@ -457,9 +472,9 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
 
     @Override
     public Bundle onPrivateEvent(int eventCode, Bundle bundle) {
-        switch (eventCode){
+        switch (eventCode) {
             case DataInter.PrivateEvent.EVENT_CODE_UPDATE_SEEK:
-                if(bundle!=null){
+                if (bundle != null) {
                     int curr = bundle.getInt(EventKey.INT_ARG1);
                     int duration = bundle.getInt(EventKey.INT_ARG2);
                     updateUI(curr, duration);
@@ -481,7 +496,7 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
 
     @Override
     public void onSingleTapUp(MotionEvent event) {
-        if(!mGestureEnable)
+        if (!mGestureEnable)
             return;
         toggleController();
     }
@@ -496,7 +511,7 @@ public class ControllerCover extends BaseCover implements OnTimerUpdateListener,
 
     @Override
     public void onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        if(!mGestureEnable)
+        if (!mGestureEnable)
             return;
     }
 
