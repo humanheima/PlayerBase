@@ -1,9 +1,8 @@
 package com.kk.taurus.avplayer.ui;
 
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import com.kk.taurus.avplayer.R;
@@ -18,16 +17,11 @@ public class DetailSeamlessPlayActivity extends AppCompatActivity {
     private FrameLayout flDetailVideoContainer;
     private RelationAssist mAssist;
 
-
-    public static void launch(Context context) {
-        Intent intent = new Intent(context, DetailSeamlessPlayActivity.class);
-        context.startActivity(intent);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_seamless_play);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         flDetailVideoContainer = findViewById(R.id.flDetailVideoContainer);
         mAssist = RelationAssistSingleton.getAssist(getApplicationContext());
         mAssist.attachContainer(flDetailVideoContainer);
@@ -39,10 +33,9 @@ public class DetailSeamlessPlayActivity extends AppCompatActivity {
         int state = mAssist.getState();
         if (state == IPlayer.STATE_PLAYBACK_COMPLETE)
             return;
-        if (mAssist.isInPlaybackState()) {
-            if (mAssist.getReceiverGroup().getGroupValue().getBoolean(GroupValueMap.USER_START_PLAY)) {
-                mAssist.resume();
-            }
+        boolean userStart = mAssist.getReceiverGroup().getGroupValue().getBoolean(GroupValueMap.USER_START_PLAY);
+        if (mAssist.isInPlaybackState() && userStart) {
+            mAssist.resume();
         }
     }
 

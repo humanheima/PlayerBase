@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
@@ -61,6 +62,7 @@ public class TestToDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test_to_detail);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         flVideoContainer = findViewById(R.id.flVideoContainer);
         btnToDetail = findViewById(R.id.btnToDetail);
         btnToDetail.setOnClickListener(new View.OnClickListener() {
@@ -84,6 +86,7 @@ public class TestToDetailActivity extends AppCompatActivity {
         dataSource.setTitle("神奇的珊瑚");
 
         mAssist.setDataSource(dataSource);
+        //标记用户手动播放或者暂停
         mAssist.getReceiverGroup().getGroupValue().putBoolean(GroupValueMap.USER_START_PLAY, true);
         mAssist.attachContainer(flVideoContainer);
         mAssist.play();
@@ -96,10 +99,9 @@ public class TestToDetailActivity extends AppCompatActivity {
         int state = mAssist.getState();
         if (state == IPlayer.STATE_PLAYBACK_COMPLETE)
             return;
-        if (mAssist.isInPlaybackState()) {
-            if (receiverGroup.getGroupValue().getBoolean(GroupValueMap.USER_START_PLAY)) {
-                mAssist.resume();
-            }
+        boolean userStart = receiverGroup.getGroupValue().getBoolean(GroupValueMap.USER_START_PLAY);
+        if (mAssist.isInPlaybackState() && userStart) {
+            mAssist.resume();
         }
     }
 
