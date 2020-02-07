@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.kk.taurus.avplayer.list_to_detail.TestListActivity;
 import com.kk.taurus.avplayer.ui.BaseVideoViewActivity;
 import com.kk.taurus.avplayer.ui.InputUrlPlayActivity;
 import com.kk.taurus.avplayer.ui.ShareAnimationActivityA;
@@ -109,6 +110,10 @@ public class HomeActivity extends AppCompatActivity {
 
     public void testToDetail(View view) {
         TestToDetailActivity.launch(this);
+    }
+
+    public void testListToDetail(View view) {
+        TestListActivity.launch(this);
     }
 
     private void intentTo(Class<? extends Activity> cls) {

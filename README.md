@@ -494,3 +494,5 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+* [Android在64位机器上（三星S6，华为P8等）找不到其他so库](https://www.jianshu.com/p/3c11a493828a)

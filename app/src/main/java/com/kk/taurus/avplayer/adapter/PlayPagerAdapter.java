@@ -8,9 +8,9 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.kk.taurus.avplayer.R;
 import com.kk.taurus.avplayer.bean.VideoBean;
-import com.kk.taurus.avplayer.utils.GlideApp;
 
 import java.util.List;
 
@@ -19,14 +19,14 @@ public class PlayPagerAdapter extends PagerAdapter {
     private Context mContext;
     private List<VideoBean> mItems;
 
-    public PlayPagerAdapter(Context context, List<VideoBean> list){
+    public PlayPagerAdapter(Context context, List<VideoBean> list) {
         this.mContext = context;
         this.mItems = list;
     }
 
     @Override
     public int getCount() {
-        if(mItems!=null)
+        if (mItems != null)
             return mItems.size();
         return 0;
     }
@@ -39,9 +39,8 @@ public class PlayPagerAdapter extends PagerAdapter {
         FrameLayout playerContainer = itemView.findViewById(R.id.playerContainer);
         playerContainer.setTag(bean.getPath());
         ImageView coverView = itemView.findViewById(R.id.iv_cover);
-        GlideApp.with(mContext)
+        Glide.with(mContext)
                 .load(bean.getPath())
-                .centerInside()
                 .into(coverView);
         container.addView(itemView);
         return itemView;

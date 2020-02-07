@@ -1,7 +1,10 @@
 package com.kk.taurus.avplayer.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
@@ -13,7 +16,7 @@ import com.kk.taurus.playerbase.player.IPlayer;
 
 public class DetailSeamlessPlayActivity extends AppCompatActivity {
 
-
+    private static final String TAG = "DetailSeamlessPlayActiv";
     private FrameLayout flDetailVideoContainer;
     private RelationAssist mAssist;
 
@@ -42,13 +45,28 @@ public class DetailSeamlessPlayActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        Log.d(TAG, "onPause: ");
         int state = mAssist.getState();
         if (state == IPlayer.STATE_PLAYBACK_COMPLETE)
             return;
+        /*if (mAssist.isInPlaybackState()) {
+            mAssist.pause();
+        } else {
+            mAssist.stop();
+        }*/
+    }
+
+    @Override
+    public void onBackPressed() {
+        Log.d(TAG, "onBackPressed: ");
         if (mAssist.isInPlaybackState()) {
             mAssist.pause();
         } else {
             mAssist.stop();
         }
+        Intent intent = new Intent("action_reattach");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        super.onBackPressed();
     }
+
 }

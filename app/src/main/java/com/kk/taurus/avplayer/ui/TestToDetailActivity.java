@@ -2,9 +2,11 @@ package com.kk.taurus.avplayer.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +15,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 
 import com.kk.taurus.avplayer.R;
+import com.kk.taurus.avplayer.list_to_detail.AttachReceiver;
 import com.kk.taurus.avplayer.play.DataInter;
 import com.kk.taurus.avplayer.play.ReceiverGroupManager;
 import com.kk.taurus.avplayer.utils.GroupValueMap;
@@ -52,6 +55,7 @@ public class TestToDetailActivity extends AppCompatActivity {
             }
         }
     };
+    private AttachReceiver receiver;
 
     public static void launch(Context context) {
         Intent intent = new Intent(context, TestToDetailActivity.class);
@@ -69,7 +73,7 @@ public class TestToDetailActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(TestToDetailActivity.this, DetailSeamlessPlayActivity.class);
-                startActivityForResult(intent, 100);
+                startActivity(intent);
             }
         });
 
@@ -90,6 +94,19 @@ public class TestToDetailActivity extends AppCompatActivity {
         mAssist.getReceiverGroup().getGroupValue().putBoolean(GroupValueMap.USER_START_PLAY, true);
         mAssist.attachContainer(flVideoContainer);
         mAssist.play();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("action_reattach");
+
+        receiver = new AttachReceiver(
+                new AttachReceiver.AttachCallback() {
+                    @Override
+                    public void attach(Context context, Intent intent) {
+                        Log.d(TAG, "onActivityResult: ");
+                        mAssist.attachContainer(flVideoContainer);
+                    }
+                });
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, intentFilter);
     }
 
     @Override
@@ -103,13 +120,6 @@ public class TestToDetailActivity extends AppCompatActivity {
         if (mAssist.isInPlaybackState() && userStart) {
             mAssist.resume();
         }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        Log.d(TAG, "onActivityResult: ");
-        mAssist.attachContainer(flVideoContainer);
     }
 
     @Override
@@ -128,6 +138,7 @@ public class TestToDetailActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         RelationAssistSingleton.releaseAssist();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver);
         mAssist = null;
         super.onDestroy();
     }
